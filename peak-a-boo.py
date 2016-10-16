@@ -48,6 +48,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
         try:
             self.data_plot(filePath)
         except Exception as e:
+            print(e)
             try:
                 self.data_plot_Zeiss(filePath)
             except Exception as e:
@@ -56,11 +57,13 @@ class MyApp(Ui_MainWindow, QMainWindow):
     def data_plot(self, filepath):
         self.fig1.clf()
         self.data = pandas.read_csv(filepath, "\t")[2:]
+        self.data['Time'] = self.data['Time'].astype(int)
+        self.data = self.data.set_index('Time')
         try:
             del self.data["Unnamed: 3"]
         except Exception:
             pass
-        self.data = self.data.drop_duplicates(subset='Time', keep='last')
+        # self.data = self.data[~self.data.index.duplicated(keep='last')]
         self.data["CFP"] = self.data["CFP"].str.replace(",", ".")
         self.data["YFP"] = self.data["YFP"].str.replace(",", ".")
         self.data["ratio"] = self.data["YFP"].astype("float") / self.data["CFP"].astype("float")
@@ -73,18 +76,18 @@ class MyApp(Ui_MainWindow, QMainWindow):
         except Exception:
             pass
         self.indexes = [int(elem) for elem in self.indexes]
-        self.blIndexes = [self.data['ratio'][elem-20:elem].idxmin() for elem in self.indexes]
-        self.dataindex = self.data.loc[self.indexes]
-        self.blYindexes = self.data.loc[self.blIndexes]
-        self.datayIndex = np.array(self.dataindex["ratio"])
-        self.datablIndex = np.array(self.blYindexes['ratio'])
+        self.blIndexes = [self.data['ratio'][elem-20:elem].idxmin() for elem in self.indexes if elem > 20]
+        self.dataindex = self.data['ratio'].iloc[self.indexes]
+        self.blYindexes = self.data['ratio'].loc[self.blIndexes]
+        self.datayIndex = np.array(self.dataindex)
+        self.datablIndex = np.array(self.blYindexes)
         self.ax1f1 = self.fig1.add_subplot(211)
         self.ax1f2  = self.fig1.add_subplot(212)
         self.ax1f1.plot(self.datax, self.data.CFP.tolist(), label="CFP", marker="o", markevery=200)
         self.ax1f1.plot(self.datax, self.data.YFP.tolist(), label="YFP", marker="s", markevery=200)
         self.ax1f2.plot(self.datax, self.datay, alpha=0.5, label='ratio')
-        self.ax1f2.scatter(self.indexes, self.datayIndex, marker='*', color='r', s=40)
-        self.ax1f2.scatter(self.blIndexes, self.datablIndex, marker='o', color='g', s=40)
+        #self.ax1f2.scatter(self.indexes, self.datayIndex, marker='*', color='r', s=40)
+        #self.ax1f2.scatter(self.blIndexes, self.datablIndex, marker='o', color='g', s=40)
         self.ax1f2.set_xlim([0, max(self.datax)])
         self.ax1f1.set_xlim([0, max(self.datax)])
         self.ax1f2.set_xlabel("time (sec)")
@@ -92,7 +95,6 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.ax1f2.legend(loc="upper left", prop={'size':10}, bbox_to_anchor=(0.95, 1.10), fancybox=True, shadow=True)
         #self.canvas.mpl_connect('button_press_event', self.pickon)
         self.canvas.draw()
-        #self.canvasPlot(fig1)
     
     def data_plot_Zeiss(self, filepath):
         self.fig1.clf()
@@ -121,7 +123,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.ax1f1.plot(self.datax, self.data.CFP.tolist(), label="CFP", marker="o", markevery=200)
         self.ax1f1.plot(self.datax, self.data.YFP.tolist(), label="YFP", marker="s", markevery=200)
         self.ax1f2.plot(self.datax, self.datay, alpha=0.5, label='ratio')
-        self.ax1f2.scatter(self.indexes, self.datayIndex, marker='*', color='r', s=40)
+        #self.ax1f2.scatter(self.indexes, self.datayIndex, marker='*', color='r', s=40)
         self.ax1f1.set_xlim([0, max(self.datax)])
         self.ax1f2.set_xlim([0, max(self.datax)])
         self.ax1f2.set_xlabel("time (sec)")
