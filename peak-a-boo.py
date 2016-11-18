@@ -1,12 +1,5 @@
-import sys
-import pandas
-import csv
-import os
-import matplotlib
-import scipy.signal
+import sys, csv, os, pandas, peakutils, scipy.signal
 import numpy as np
-import peakutils
-from math import factorial
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -39,15 +32,18 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.piekHeight = {}
 
     def fileLister(self, dirPath):
+        """ Function fileLister: Takes as input the directory path (string dirPath); Returns a list containing paths of all txt files in the directory.
+            Walks through all folders in de directory and adds the paths ending with .txt to the filelist. """
         filelist = []
         for root, dirs, files in os.walk(dirPath):
             for file in files:
                 if file.endswith(".txt"):
                     filelist.append(root.replace(dirPath, "") + "\\" + file)
-        
         return filelist 
     
     def tableSetter(self, table, rowCount, columnCount, columnData):
+        """ Function tableSetter: Takes as input the table instant (tableWidget table), the ammount of rowes (int rowCount), the ammount of columns (int columnCount), 
+            the data for the table (list columnData). Initialize the table and fills it with the items of columnData. """ 
         table.setRowCount(rowCount)
         table.setColumnCount(columnCount)
         for i in range(len(columnData)):
@@ -56,8 +52,10 @@ class MyApp(Ui_MainWindow, QMainWindow):
         table.resizeRowsToContents()
         table.cellChanged.connect(self.cellchanged)
     
-    def inputTableSetter(self, table, rowCoutn, columnCount):
-        table.setRowCount(rowCoutn)
+    def inputTableSetter(self, table, rowCount, columnCount):
+        """" Function inputTableSetter: takes as input the table instant (tableWidget table), the ammount of rows (int rowCount), the ammount of columns (int columnCount).
+             Initialize the table and fills it with a combo_box with multiple options. """"
+        table.setRowCount(rowCount)
         table.setColumnCount(columnCount)
         combo_box_options = ["-", "++", "+", "+/-", "-", "--"]
         for i in range(columnCount):
