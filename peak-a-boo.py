@@ -72,6 +72,9 @@ class MyApp(Ui_MainWindow, QMainWindow):
         for i in range(columnCount):
             combo = QComboBox()
             combo.addItems(combo_box_options)
+            if self.filePath in self.inputValues:
+                ind = combo.findText(self.inputValues[self.filePath][i])
+                combo.setCurrentIndex(ind)
             table.setCellWidget(0, i, combo)
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
