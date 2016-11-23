@@ -30,20 +30,28 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.graphWindowLayout.addWidget(self.toolbar)
         self.dataMemory = {}
         self.piekHeight = {}
+        self.inputValues = {}
 
     def fileLister(self, dirPath):
-        """ Function fileLister: Takes as input the directory path (string dirPath); Returns a list containing paths of all txt files in the directory.
-            Walks through all folders in de directory and adds the paths ending with .txt to the filelist. """
+
+        """ Function fileLister: Takes as input the directory path (string dirPath);
+            Returns a list containing paths of all txt files in the directory.
+            Walks through all folders in de directory and adds the paths ending with .txt to the filelist."""
+
         filelist = []
         for root, dirs, files in os.walk(dirPath):
             for file in files:
                 if file.endswith(".txt"):
                     filelist.append(root.replace(dirPath, "") + "\\" + file)
-        return filelist 
-    
+
+        return filelist
+
     def tableSetter(self, table, rowCount, columnCount, columnData):
-        """ Function tableSetter: Takes as input the table instant (tableWidget table), the ammount of rowes (int rowCount), the ammount of columns (int columnCount), 
-            the data for the table (list columnData). Initialize the table and fills it with the items of columnData. """ 
+
+        """ Function tableSetter: Takes as input the table instant (tableWidget table),
+            the ammount of rowes (int rowCount), the ammount of columns (int columnCount),
+            the data for the table (list columnData). Initialize the table and fills it with the items of columnData. """
+
         table.setRowCount(rowCount)
         table.setColumnCount(columnCount)
         for i in range(len(columnData)):
@@ -51,22 +59,29 @@ class MyApp(Ui_MainWindow, QMainWindow):
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
         table.cellChanged.connect(self.cellchanged)
-    
+
     def inputTableSetter(self, table, rowCount, columnCount):
-        """" Function inputTableSetter: takes as input the table instant (tableWidget table), the ammount of rows (int rowCount), the ammount of columns (int columnCount).
-             Initialize the table and fills it with a combo_box with multiple options. """"
+
+        """ Function inputTableSetter: takes as input the table instant (tableWidget table),
+            the ammount of rows (int rowCount), the ammount of columns (int columnCount).
+             Initialize the table and fills it with a combo_box with multiple options. """
+
         table.setRowCount(rowCount)
         table.setColumnCount(columnCount)
-        combo_box_options = ["-", "++", "+", "+/-", "-", "--"]
+        combo_box_options = [" ", "++", "+", "+/-", "-", "--"]
         for i in range(columnCount):
             combo = QComboBox()
             combo.addItems(combo_box_options)
-            table.setCellWidget(0,i,combo)
+            table.setCellWidget(0, i, combo)
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
 
-    
     def bigTableSetter(self, table, rowCount, columnCount, data):
+
+        """ Function bigTableSetter: takes as input the table instant (tableWidget table),
+            the ammount of rows (int rowCount), the ammount of columns (int columnCount),
+            the data for the table (dict data). Initialize the table and fills it with the data. """
+
         table.setRowCount(rowCount)
         table.setColumnCount(columnCount)
         i = 0
@@ -79,21 +94,35 @@ class MyApp(Ui_MainWindow, QMainWindow):
             i += 1
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
-    
+
     def saveUserInput(self, columnCount):
+
+        """ Function saveUserInput: takes as input the ammount of columns (int columnCount).
+        Saves input of userInputTable in dict """
+
         inputs = []
         for i in range(columnCount):
             inputs.append(self.inputTable.cellWidget(0, i).currentText())
-        print(inputs)
+        self.inputValues[self.filePath] = inputs
+        columnCount = len(self.inputValues[max(self.inputValues, key=lambda k: len(self.inputValues[k]))]) + 1
+        self.bigTableSetter(self.viewTable_1, len(self.inputValues), columnCount, self.inputValues)
+
 
     def cellchanged(self):
+
+        """ Function cellchanged: changes value of self.piekHeight to 
+            the new value that is changed in de table. """
+
         cor = self.dataTable.currentColumn()
         if cor > -1:
             self.piekHeight[self.filePath][cor] = int(self.dataTable.currentItem().text())
-    
+
     def tableValues(self, path):
+        """ Function tableValues: takes as input the path of the file (str path); It calculates 
+            the percentage of the piek in comparison with the first peak. It corrects for Dye 
+            leakage bye substracting 10% of the first peak if the peak is further. """
+
         values = self.piekHeight[path]
-        index = 1
         percentage = 0.9
         tableData = [100]
         startValue = values[0]
@@ -110,7 +139,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
 
     def handleSave(self):
         path = QFileDialog.getSaveFileName(
-                self, 'Save File', '', 'CSV(*.csv)')
+            self, 'Save File', '', 'CSV(*.csv)')
         if all(path):
             with open(path[0], 'w') as stream:
                 writer = csv.writer(stream)
@@ -124,15 +153,15 @@ class MyApp(Ui_MainWindow, QMainWindow):
                         else:
                             rowdata.append('')
                     writer.writerow(rowdata)
-    
+
     def browse_folder(self):
         self.directory = QFileDialog.getExistingDirectory(self,
-                                                       "Pick a folder")
+                                                          "Pick a folder")
         self.fileList = self.fileLister(self.directory)
         self.index = 0
         self.listLijst.addItems(self.fileList)
         self.listLijst.clicked.connect(self.selected_file)
-    
+
     def selected_file(self, index):
         self.index = index.row()
         self.filePath = self.directory + index.data()
@@ -140,7 +169,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
             self.Data_read(self.filePath)
         except Exception as e:
             self.data_plot_Zeiss_ratio(self.filePath)
-    
+
     def Data_read(self, filepath):
         with open(filepath, 'r') as f:
             line = f.readline().strip()
@@ -173,14 +202,14 @@ class MyApp(Ui_MainWindow, QMainWindow):
             blValue = self.data['ratio'][0:60].median()
             self.dataMemory[filepath] = [indexes, blValue]
         self.plotter(filepath)
-    
+
     def plotter(self, filepath):
         self.fig1.clf()
         datayIndex = self.data['ratio'].iloc[self.dataMemory[filepath][0]]
         self.fig1.suptitle(filepath)
         self.piekHeight[filepath] = list(datayIndex - self.dataMemory[filepath][1])
         self.ax1f1 = self.fig1.add_subplot(211)
-        self.ax1f2  = self.fig1.add_subplot(212)
+        self.ax1f2 = self.fig1.add_subplot(212)
         self.ax1f1.plot(self.data.CFP, label="CFP", marker="o", markevery=200)
         self.ax1f1.plot(self.data.YFP, label="YFP", marker="s", markevery=200)
         self.ax1f2.plot(self.data.ratio, alpha=0.5, label='ratio')
@@ -192,7 +221,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.ax1f2.legend(loc="upper left", prop={'size':10}, bbox_to_anchor=(0.95, 1.10), fancybox=True, shadow=True)
         self.canvas.draw()
         self.tableValues(filepath)
-    
+
     def data_plot_Zeiss_ratio(self, filepath):
         self.fig1.clf()
         self.data = pandas.read_csv(filepath, "\t", header=3)
@@ -201,7 +230,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.data = self.data.set_index("X")
         datay = np.array(self.data["Y"])
         self.fig1.suptitle(filepath)
-        
+
         if filepath in self.dataMemory:
             indexes = self.dataMemory[filepath][0]
             blIndexes = self.dataMemory[filepath][1]
@@ -214,7 +243,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
             indexes = [int(elem) for elem in indexes]
             blIndexes = [self.data['ratio'][elem-20:elem].idxmin() for elem in indexes if elem > 20]
             self.dataMemory[filepath] = [indexes, blIndexes]
-        
+
         dataindex = self.data.loc[indexes]
         datayIndex = np.array(dataindex["Y"])
         blYindexes = self.data['Y'].loc[blIndexes]
@@ -229,7 +258,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.ax1f1.set_xlabel("time (sec)")
         self.ax1f1.legend(loc="upper left", prop={'size':10}, bbox_to_anchor=(0.95, 1.10), fancybox=True, shadow=True)
         self.canvas.draw()
-    
+
     def pickon(self, event):
         if event.button == 1:
             indexi = list(self.dataMemory[self.filePath][0])
@@ -237,18 +266,20 @@ class MyApp(Ui_MainWindow, QMainWindow):
             indexi.sort()
             self.dataMemory[self.filePath][0] = np.array(indexi)
             self.plotter(self.filePath)
+            self.saveUserInput(len(self.piekHeight[self.filePath]))
 
         elif event.button == 3:
             rapo = range(int(event.xdata)-10, int(event.xdata)+10)
             indexi = list(self.dataMemory[self.filePath][0])
-            po = [el for el in indexi if el in rapo]            
+            po = [el for el in indexi if el in rapo]
             if len(po) > 0:
                 ind = indexi.index(po[0])
                 indexi.remove(po[0])
             self.dataMemory[self.filePath][0] = np.array(indexi)
             self.plotter(self.filePath)
+            self.saveUserInput(len(self.piekHeight[self.filePath]))
 
-#moet verbeterd worden    
+#moet verbeterd worden
     def pickonRevamp(self, event):
         if event.button == 1:
             indexi = list(self.indexes)
@@ -281,40 +312,44 @@ class MyApp(Ui_MainWindow, QMainWindow):
 
 
 class MyToolbar(NavigationToolbar):
-    def __init__(self, figure_canvas, parent= None):
+
+    def __init__(self, figure_canvas, parent=None):
         self.toolitems = (('Home', 'Lorem ipsum dolor sit amet', 'home', 'home'),
-            ('Back', 'consectetuer adipiscing elit', 'back', 'newBack'),
-            ('Forward', 'sed diam nonummy nibh euismod', 'forward', 'newForward'),
-            (None, None, None, None),
-            ('Pan', 'tincidunt ut laoreet', 'move', 'pan'),
-            ('Zoom', 'dolore magna aliquam', 'zoom_to_rect', 'zoom'),
-            (None, None, None, None),
-            ('Subplots', 'putamus parum claram', 'subplots', 'configure_subplots'),
-            ('Save', 'sollemnes in futurum', 'filesave', 'save_figure'),
-            ('print', 'print plot', dirPath + "\print", 'print_plot'),
-            ('delete', 'delete plot', dirPath + "\\trash", 'delete_plot'),
-            ('piek', 'set and remove piek marker', dirPath + '\piek', 'piek'),
-            )
+                          ('Back', 'consectetuer adipiscing elit', 'back', 'newBack'),
+                          ('Forward', 'sed diam nonummy nibh euismod', 'forward', 'newForward'),
+                          (None, None, None, None),
+                          ('Pan', 'tincidunt ut laoreet', 'move', 'pan'),
+                          ('Zoom', 'dolore magna aliquam', 'zoom_to_rect', 'zoom'),
+                          (None, None, None, None),
+                          ('Subplots', 'putamus parum claram', 'subplots', 'configure_subplots'),
+                          ('Save', 'sollemnes in futurum', 'filesave', 'save_figure'),
+                          ('print', 'print plot', dirPath + "\print", 'print_plot'),
+                          ('delete', 'delete plot', dirPath + "\\trash", 'delete_plot'),
+                          ('piek', 'set and remove piek marker', dirPath + '\piek', 'piek'),
+                         )
         super(MyToolbar, self).__init__(figure_canvas, parent=None)
         self.piek_status = False
-    
+
     def print_plot(self):
         size = list(myapp.fig1.get_size_inches())
-        myapp.fig1.set_size_inches(11.69,8.27)
+        myapp.fig1.set_size_inches(11.69, 8.27)
         myapp.fig1.savefig("temp.pdf", formta="pdf", orientation="landscape")
         myapp.fig1.set_size_inches(size[0], size[1], forward=True)
         myapp.canvas.draw()
         os.startfile("temp.pdf", "print")
-    
+
     def delete_plot(self):
         del myapp.fileList[myapp.index]
+        myapp.listLijst.clear()
+        myapp.listLijst.addItems(myapp.fileList)
         myapp.filePath = myapp.directory + myapp.fileList[myapp.index]
         try:
             myapp.Data_read(myapp.filePath)
         except Exception:
             myapp.data_plot_Zeiss_ratio(myapp.filePath)
-    
+
     def newForward(self):
+        myapp.saveUserInput(len(myapp.piekHeight[myapp.filePath]))
         myapp.index += 1
         if myapp.index > len(myapp.fileList) - 1:
             myapp.index = 0
@@ -327,6 +362,7 @@ class MyToolbar(NavigationToolbar):
             myapp.data_plot_Zeiss_ratio(myapp.filePath)
 
     def newBack(self):
+        myapp.saveUserInput(len(myapp.piekHeight[myapp.filePath]))
         myapp.index += -1
         if myapp.index < 0:
             myapp.index = len(myapp.fileList) - 1
@@ -337,7 +373,7 @@ class MyToolbar(NavigationToolbar):
             myapp.Data_read(myapp.filePath)
         except Exception as e:
             myapp.data_plot_Zeiss_ratio(myapp.filePath)
-    
+
     def piek(self):
         self.piek_status = not self.piek_status
         if self.piek_status:
@@ -352,7 +388,7 @@ class MyToolbar(NavigationToolbar):
         self._update_buttons_checked()
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     myapp = MyApp()
     myapp.show()
