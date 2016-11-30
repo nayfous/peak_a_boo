@@ -1,4 +1,4 @@
-import sys, csv, os, pandas, peakutils, scipy.signal
+import sys, csv, os, pandas, peakutils, scipy.signal, difflib
 import numpy as np
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -18,8 +18,10 @@ class MyApp(Ui_MainWindow, QMainWindow):
     def __init__(self):
         super(MyApp, self).__init__()
         self.setupUi(self)
+        self.readingStimulieFile()
         self.fileKnop.clicked.connect(self.browse_folder)
-        self.SaveKnop.clicked.connect(self.handleSave)
+        self.SaveKnop.clicked.connect(self.case(self.viewTable_2))
+        self.saveKnop2.clicked.connect(self.case(self.viewTable_1))
         self.model = QFileSystemModel()
         self.fig1 = Figure()
         self.canvas = FigureCanvas(self.fig1)
@@ -31,6 +33,12 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.dataMemory = {}
         self.piekHeight = {}
         self.inputValues = {}
+
+    def readingStimulieFile(self):
+        filePath = QFileDialog.getOpenFileName(self)[0]
+        self.stimulieDataFrame = pandas.read_csv(filePath, header=None, sep=";")
+
+        # use difflib.get_close_matches(word, list(self.stimulieDataFrame[0])) to find matching name
 
     def fileLister(self, dirPath):
 
@@ -68,7 +76,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
 
         table.setRowCount(rowCount)
         table.setColumnCount(columnCount)
-        combo_box_options = [" ", "++", "+", "+/-", "-", "--"]
+        combo_box_options = ["O", "+", "++"]
         for i in range(columnCount):
             combo = QComboBox()
             combo.addItems(combo_box_options)
@@ -122,7 +130,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
 
     def tableValues(self, path):
         """ Function tableValues: takes as input the path of the file (str path); It calculates 
-            the percentage of the piek in comparison with the first peak. It corrects for Dye 
+            the percentage of the peak in comparison with the first peak. It corrects for Dye 
             leakage bye substracting 10% of the first peak if the peak is further. """
 
         values = self.piekHeight[path]
@@ -139,23 +147,25 @@ class MyApp(Ui_MainWindow, QMainWindow):
         self.bigTableSetter(self.viewTable_2, len(self.piekHeight), columnCount, self.piekHeight)
         self.inputTableSetter(self.inputTable, 1, len(tableData))
         self.saveUserInput(len(tableData))
-
-    def handleSave(self):
-        path = QFileDialog.getSaveFileName(
-            self, 'Save File', '', 'CSV(*.csv)')
-        if all(path):
-            with open(path[0], 'w') as stream:
-                writer = csv.writer(stream)
-                for row in range(self.viewTable_2.rowCount()):
-                    rowdata = []
-                    for column in range(self.viewTable_2.columnCount()):
-                        item = self.viewTable_2.item(row, column)
-                        if item is not None:
-                            rowdata.append(
-                                item.text())
-                        else:
-                            rowdata.append('')
-                    writer.writerow(rowdata)
+    
+    def case(self, table):
+        def handleSave():
+            path = QFileDialog.getSaveFileName(
+                self, 'Save File', '', 'CSV(*.csv)')
+            if all(path):
+                with open(path[0], 'w') as stream:
+                    writer = csv.writer(stream)
+                    for row in range(table.rowCount()):
+                        rowdata = []
+                        for column in range(table.columnCount()):
+                            item = table.item(row, column)
+                            if item is not None:
+                                rowdata.append(
+                                    item.text())
+                            else:
+                                rowdata.append('')
+                        writer.writerow(rowdata)
+        return handleSave
 
     def browse_folder(self):
         self.directory = QFileDialog.getExistingDirectory(self,
@@ -168,6 +178,8 @@ class MyApp(Ui_MainWindow, QMainWindow):
     def selected_file(self, index):
         self.index = index.row()
         self.filePath = self.directory + index.data()
+        index = difflib.get_close_matches(index.data(), list(self.stimulieDataFrame[0]), cutoff=0)
+        dat = self.stimulieDataFrame[self.stimulieDataFrame[0] == index[0]].dropna(axis=1)
         try:
             self.Data_read(self.filePath)
         except Exception as e:
@@ -196,7 +208,7 @@ class MyApp(Ui_MainWindow, QMainWindow):
             indexes = self.dataMemory[filepath][0]
             blValue = self.dataMemory[filepath][1]
         else:
-            indexes = peakutils.indexes(dataRatio, thres=0.2, min_dist=200)
+            indexes = peakutils.indexes(dataRatio, thres=0.4, min_dist=200)
             try:
                 indexes = peakutils.interpolate(self.data.index.values, dataRatio, ind=indexes)
             except Exception:
