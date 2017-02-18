@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>696</width>
-    <height>673</height>
+    <width>819</width>
+    <height>754</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,6 +46,129 @@ border: 1px solid gray
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
+        <widget class="QWidget" name="widget" native="true">
+         <property name="maximumSize">
+          <size>
+           <width>250</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <property name="leftMargin">
+           <number>15</number>
+          </property>
+          <property name="topMargin">
+           <number>12</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="signalBox">
+            <property name="minimumSize">
+             <size>
+              <width>60</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Signal</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="ratioBox">
+            <property name="minimumSize">
+             <size>
+              <width>60</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>ratio</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="firstSignalBox">
+            <property name="maximumSize">
+             <size>
+              <width>15</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>CFP</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="firstSignalText">
+            <property name="inputMask">
+             <string/>
+            </property>
+            <property name="text">
+             <string>CFP</string>
+            </property>
+            <property name="frame">
+             <bool>false</bool>
+            </property>
+            <property name="clearButtonEnabled">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="secondSignalBox">
+            <property name="maximumSize">
+             <size>
+              <width>15</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>YFP</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="secondSignalText">
+            <property name="inputMask">
+             <string/>
+            </property>
+            <property name="text">
+             <string>YFP</string>
+            </property>
+            <property name="frame">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QWidget" name="widget_2" native="true">
          <property name="minimumSize">
           <size>
@@ -63,6 +186,9 @@ border: 1px solid gray
           <string notr="true">#frame_2{background:#F5F5F5; border-left: 3px solid gray; border-right: 3px solid gray; border-bottom: 4px solid gray}</string>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="leftMargin">
+           <number>15</number>
+          </property>
           <item>
            <widget class="QListWidget" name="listLijst">
             <property name="minimumSize">
@@ -73,7 +199,7 @@ border: 1px solid gray
             </property>
             <property name="styleSheet">
              <string notr="true">#listLijst {
-border: 2px solid gray;
+border: 2px solid lightgray;
 border-radius: 10px;
 background: white;
 }</string>
@@ -142,113 +268,92 @@ background: white;
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_4">
              <item>
-              <widget class="QPushButton" name="saveKnop2">
-               <property name="styleSheet">
-                <string notr="true">#saveKnop2{background:white;border:2px solid gray}</string>
-               </property>
-               <property name="text">
-                <string>Save input table</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="SaveKnop">
-               <property name="styleSheet">
-                <string notr="true">#SaveKnop{background:white;border:2px solid gray}</string>
-               </property>
-               <property name="text">
-                <string>Save data table</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="fileKnop">
+              <widget class="QFrame" name="frame_2">
                <property name="minimumSize">
                 <size>
                  <width>50</width>
-                 <height>25</height>
+                 <height>35</height>
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">#fileKnop{background:white;border:2px solid gray}</string>
+                <string notr="true">
+#frame_2{background:transparent;border: 2px solid lightgray; border-top: 2px transparent; }</string>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QPushButton" name="fileKnop">
+                  <property name="minimumSize">
+                   <size>
+                    <width>50</width>
+                    <height>25</height>
+                   </size>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">#fileKnop{background:transparent;}</string>
+                  </property>
+                  <property name="text">
+                   <string>Pick a folder</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="addButton">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>20</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>+</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="importButton">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">#importButton{background:transparent;border-top: 2px solid lightgray; border-left:2px solid lightgray; border-right: 2px solid lightgray}</string>
                </property>
                <property name="text">
-                <string>Pick a folder</string>
+                <string>Import stimulation data</string>
                </property>
               </widget>
              </item>
             </layout>
            </widget>
           </item>
-          <item alignment="Qt::AlignHCenter">
-           <widget class="QTabWidget" name="tabWidget">
+          <item>
+           <widget class="QTableWidget" name="inputTable">
             <property name="minimumSize">
              <size>
-              <width>520</width>
-              <height>80</height>
+              <width>0</width>
+              <height>50</height>
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">#tabWidget {
-background: #F5F5F5;
-border: 1px solid gray
-}</string>
+             <string notr="true">#inputTable{border:2px solid lightgray}</string>
             </property>
-            <property name="tabShape">
-             <enum>QTabWidget::Triangular</enum>
-            </property>
-            <property name="currentIndex">
-             <number>0</number>
-            </property>
-            <widget class="QWidget" name="tab_3">
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <attribute name="title">
-              <string>Tab 1</string>
-             </attribute>
-             <layout class="QVBoxLayout" name="verticalLayout_5">
-              <item>
-               <widget class="QTableWidget" name="inputTable">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">#inputTable{border:2px solid gray}</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-            <widget class="QWidget" name="tab_4">
-             <attribute name="title">
-              <string>Tab 2</string>
-             </attribute>
-             <layout class="QVBoxLayout" name="verticalLayout_2">
-              <item>
-               <widget class="QTableWidget" name="dataTable">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>50</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>61</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">#dataTable{border:2px solid gray}</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
            </widget>
           </item>
          </layout>
@@ -262,45 +367,34 @@ border: 1px solid gray
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QTabWidget" name="tabWidget_2">
-         <property name="tabShape">
-          <enum>QTabWidget::Triangular</enum>
-         </property>
-         <property name="currentIndex">
-          <number>0</number>
-         </property>
-         <widget class="QWidget" name="tab_5">
-          <attribute name="title">
-           <string>Tab 1</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_8">
-           <item>
-            <widget class="QTableWidget" name="viewTable_1">
-             <property name="styleSheet">
-              <string notr="true">#viewTable_1{border: 2px solid gray;
+        <widget class="QTableWidget" name="viewTable_1">
+         <property name="styleSheet">
+          <string notr="true">#viewTable_1{border: 2px solid lightgray;
 border-radius: 10px;
 background: white;}</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="tab_6">
-          <attribute name="title">
-           <string>Tab 2</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_7">
-           <item>
-            <widget class="QTableWidget" name="viewTable_2">
-             <property name="styleSheet">
-              <string notr="true">#viewTable_2{border: 2px solid gray;
-border-radius: 10px;
-background: white;}</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="exportButton">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1000</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">#exportButton{background: transparent; font: 12pt &quot;Times New Roman&quot;}</string>
+         </property>
+         <property name="text">
+          <string>Export</string>
+         </property>
         </widget>
        </item>
       </layout>

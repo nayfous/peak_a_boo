@@ -1,11 +1,11 @@
 import sys
 import csv
 import os
-import difflib
 import pandas
 import peakutils
 import scipy
 import scipy.signal
+import difflib
 import numpy as np
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -27,6 +27,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
         self.setupUi(self)
         self.importButton.clicked.connect(self.reading_stimulie_file)
         self.fileKnop.clicked.connect(self.browse_folder)
+        self.addButton.clicked.connect(self.folder_add)
         self.exportButton.clicked.connect(self.case(self.viewTable_1))
         self.model = QFileSystemModel()
         self.fig1 = Figure()
@@ -59,10 +60,17 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             pass
 
     def browse_folder(self):
-        self.directory = QFileDialog.getExistingDirectory(self,
-                                                          "Pick a folder")
         self.listLijst.clear()
-        self.file_list = self.file_lister(self.directory)
+        self.folder_add()
+    
+    def folder_add(self):
+        self.directory = QFileDialog.getExistingDirectory(self,
+                                                        "Pick a folder")
+        print(self.file_list)
+        if self.file_list != None:
+            self.file_list = self.file_list + self.file_lister(self.directory)
+        else:
+            self.file_list = self.file_lister(self.directory)
         self.index = 0
         self.listLijst.clicked.connect(self.selected_file)
 
@@ -78,13 +86,15 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             del dirs
             for file in files:
                 if file.endswith(".txt"):
-                    file_list.append(root.replace(directory_path, "") + "\\" + file)
+                    file_list.append(root.replace(directory_path, "") + self.directory + "\\" + file)
                     self.listLijst.addItem(root.replace(directory_path, "") + "\\" + file)
                 elif file.endswith(".csv"):
                     ammount = self.data_checker(root.replace(directory_path, "") + "\\" + file)
                     for i in range(ammount):
-                        file_list.append(root.replace(directory_path, "") + "\\" + file + "~" + str(i))
-                        self.listLijst.addItem(root.replace(directory_path, "") + "\\" + file + "~" + str(i))
+                        file_list.append(root.replace(directory_path, "") + self.directory +
+                                         "\\" + file + "~" + str(i))
+                        self.listLijst.addItem(root.replace(directory_path, "") +
+                                               "\\" + file + "~" + str(i))
         return file_list
 
     def data_checker(self, file_path):
@@ -95,13 +105,10 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
 
     # def tableSetter(self, table, row_count, column_count, columnData):
 
-    #     """ Function tableSetter: Takes as input the table instant
-    #     (tableWidget table),
-    #         the ammount of rowes (int row_count), the ammount of columns (int
-    #         column_count),
-    #         the data for the table (list columnData).  Initialize the table
-    #         and
-    #         fills it with the items of columnData.  """
+    #     """ Function tableSetter: Takes as input the table instant (tableWidget table),
+    #         the ammount of rowes (int row_count), the ammount of columns (int column_count),
+    #         the data for the table (list columnData). Initialize the table and
+    #         fills it with the items of columnData. """
 
     #     table.setrow_count(row_count)
     #     table.setcolumn_count(column_count)
@@ -144,7 +151,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             j = 0
             table.setItem(i, j, QTableWidgetItem(str(name.split("\\")[-1])))
             for val in data[name]:
-                table.setItem(i, j + 1, QTableWidgetItem(str(val)))
+                table.setItem(i, j+1, QTableWidgetItem(str(val)))
                 j += 1
             i += 1
         table.resizeColumnsToContents()
@@ -167,13 +174,12 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
 
     # def cellchanged(self):
 
-    #     """ Function cellchanged: changes value of self.piek_height to
-    #         the new value that is changed in de table.  """
+    #     """ Function cellchanged: changes value of self.piek_height to 
+    #         the new value that is changed in de table. """
 
     #     cor = self.dataTable.currentColumn()
     #     if cor > -1:
-    #         self.piek_height[self.file_path][cor] =
-    #         int(self.dataTable.currentItem().text())
+    #         self.piek_height[self.file_path][cor] = int(self.dataTable.currentItem().text())
 
     def table_values(self, path):
         """ Function table_values: takes as input the path of the file (str path); It calculates
@@ -188,14 +194,13 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             start_value = values[0]
             values = values[1:]
             for i in values:
-                table_data.append((i / (start_value * percentage) * 100))
+                table_data.append((i/(start_value*percentage)*100))
                 percentage -= 0.1
             self.piek_height[path] = table_data
         #column_count = len(self.piek_height[max(self.piek_height,
         #                   key=lambda k: len(self.piek_height[k]))]) + 1
         #self.tableSetter(self.dataTable, 1, len(table_data), table_data)
-        #self.bigTableSetter(self.viewTable_2, len(self.piek_height),
-        #column_count,
+        #self.bigTableSetter(self.viewTable_2, len(self.piek_height), column_count,
         #                    self.piek_height)
         if len(self.labels) > 0:
             self.input_table_setter(self.inputTable, 1, len(self.labels[path]))
@@ -206,16 +211,18 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
 
     def case(self, table):
         def handle_save():
-            path = QFileDialog.getSaveFileName(self, 'Save File', '', 'CSV(*.csv)')
+            path = QFileDialog.getSaveFileName(
+                self, 'Save File', '', 'CSV(*.csv)')
             if all(path):
                 with open(path[0], 'w') as stream:
                     writer = csv.writer(stream)
-                    for row in range(table.row_count()):
+                    for row in range(table.rowCount()):
                         rowdata = []
-                        for column in range(table.column_count()):
+                        for column in range(table.columnCount()):
                             item = table.item(row, column)
                             if item is not None:
-                                rowdata.append(item.text().strip())
+                                rowdata.append(
+                                    item.text().strip())
                             else:
                                 rowdata.append('')
                         writer.writerow(rowdata)
@@ -225,27 +232,25 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
 
     def selected_file(self, index):
         self.index = index.row()
-        self.file_path = self.directory + index.data()
+        self.file_path = self.file_list[self.index]
         if '~' in self.file_path:
             self.confocal_data_reader(self.file_path)
         else:
             try:
-                self.data_managment(self.file_path)
+                self.data_read(self.file_path)
             except Exception:
-                try:
-                    self.data_read(self.file_path)
-                except Exception:
-                    self.fig1.clf()
-                    print("invalid file")
-                    self.canvas.draw()
-                    #self.data_plot_Zeiss_ratio(self.file_path)
+                self.fig1.clf()
+                print("invalid file")
+                self.canvas.draw()
+                #self.data_plot_Zeiss_ratio(self.file_path)
 
     def confocal_data_reader(self, file_path):
         if file_path not in self.labels:
             try:
                 index = difflib.get_close_matches(file_path, list(self.stimulie_dataframe[0]),
                                                   cutoff=0)
-                self.labels[file_path] = self.stimulie_dataframe[self.stimulie_dataframe[0] == index[0]].dropna(axis=1).values[0][1:]
+                self.labels[file_path] = self.stimulie_dataframe[
+                    self.stimulie_dataframe[0] == index[0]].dropna(axis=1).values[0][1:]
                 if len(self.labels[file_path]) < 1:
                     self.toolbar.delete_plot()
                     return
@@ -276,59 +281,13 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
         self.signalBox.setChecked(False)
         self.plotter(file_path)
 
-    def data_managment(self, file_path):
-        self.fig1.clf()
-        plt.ion()
-        self.fig1.suptitle(file_path)
-        if file_path not in self.labels:
-            try:
-                index = difflib.get_close_matches(file_path, list(self.stimulie_dataframe[0]),
-                                                  cutoff=0)
-                self.labels[file_path] = self.stimulie_dataframe[self.stimulie_dataframe[0] == index[0]].dropna(axis=1).values[0][1:]
-                if len(self.labels[file_path]) < 1:
-                    self.toolbar.delete_plot()
-                    return
-            except Exception:
-                pass
-
-        if self.signalBox.isChecked() and self.ratioBox.isChecked():
-            state_signal = 211
-            state_ratio = 212
-            state_first_signal = self.firstSignalBox.isChecked()
-            state_second_signal = self.secondSignalBox.isChecked()
-            self.ax1f1 = self.fig1.add_subplot(state_signal)
-            self.ax2f1 = self.fig1.add_subplot(state_ratio)
-            with open(file_path, 'r') as file:
-                if file.readline().strip() == "Time	CFP	YFP":
-                    for _ in range(2):
-                        next(file)
-                    for line in file:
-                        line = line.replace("," , ".")
-                        line = line.strip().split("\t")
-                        if state_first_signal:
-                            self.ax1f1.plot(float(line[0]), float(line[1]), labels=self.firstSignalText.text())
-                    self.canvas.draw()
-
-
-        elif self.signalBox.isChecked() and not self.ratioBox.isChecked():
-            state_signal = 111
-            self.ax1f1 = self.fig1.add_subplot(state_signal)
-        elif not self.signalBox.isChecked() and self.ratioBox.isChecked():
-            state_ratio = 111
-            self.ax2f1 = self.fig1.add_subplot(state_ratio)
-        else:
-            pass
-
-
-
-
-# verbeter zodat het sneller gaat
     def data_read(self, file_path):
         if file_path not in self.labels:
             try:
                 index = difflib.get_close_matches(file_path, list(self.stimulie_dataframe[0]),
                                                   cutoff=0)
-                self.labels[file_path] = self.stimulie_dataframe[self.stimulie_dataframe[0] == index[0]].dropna(axis=1).values[0][1:]
+                self.labels[file_path] = self.stimulie_dataframe[
+                    self.stimulie_dataframe[0] == index[0]].dropna(axis=1).values[0][1:]
                 if len(self.labels[file_path]) < 1:
                     self.toolbar.delete_plot()
                     return
@@ -348,8 +307,10 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
         self.data = self.data.drop_duplicates(subset='Time', keep='last')
         self.data = self.data.set_index('Time')
         self.data = self.data.replace(to_replace=",", value=".", regex=True)
-        self.data["YFP"] = scipy.signal.savgol_filter(np.array(self.data["YFP"].astype("float")), 17, 2)
-        self.data["CFP"] = scipy.signal.savgol_filter(np.array(self.data["CFP"].astype("float")), 17, 2)
+        self.data["YFP"] = scipy.signal.savgol_filter(np.array(
+            self.data["YFP"].astype("float")), 17, 2)
+        self.data["CFP"] = scipy.signal.savgol_filter(np.array(
+            self.data["CFP"].astype("float")), 17, 2)
         self.data["ratio"] = self.data["YFP"] / self.data["CFP"]
         data_ratio = np.array(self.data["ratio"])
         if file_path not in self.data_memory:
@@ -366,7 +327,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             baseline_value = self.data['ratio'][0:60].median()
             self.data_memory[file_path] = [indexes, baseline_value]
         self.plotter(file_path)
-# verbeter code zodat het sneller gaat
+
     def plotter(self, file_path):
         self.fig1.clf()
         self.piek_height[file_path] = []
@@ -396,8 +357,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
         if self.ratioBox.isChecked():
             self.ax1f2 = self.fig1.add_subplot(state_ratio)
             self.ax1f2.plot(self.data.ratio, alpha=0.5, label='ratio')
-            #self.ax1f2.scatter(self.data_memory[file_path][0],
-            #data_y_index.tolist(), marker='*', color='r', s=40)
+            #self.ax1f2.scatter(self.data_memory[file_path][0], data_y_index.tolist(), marker='*', color='r', s=40)
             self.ax1f2.set_xlim([0, max(self.data.index.values)])
             self.ax1f2.set_xlabel("time (sec)")
             self.ax1f2.legend(loc="upper left", prop={'size':10}, bbox_to_anchor=(0.95, 1.10), 
@@ -418,7 +378,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
                 self.save_user_input(len(self.piek_height[self.file_path]))
 
         elif event.button == 3:
-            rapo = range(int(event.xdata) - 10, int(event.xdata) + 10)
+            rapo = range(int(event.xdata)-10, int(event.xdata)+10)
             indexi = list(self.data_memory[self.file_path][0])
             popo = [el for el in indexi if el in rapo]
             if len(popo) > 0:
@@ -445,13 +405,11 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
     #     else:
     #         indexes = peakutils.indexes(datay, thres=0.2, min_dist=200)
     #         try:
-    #             indexes = peakutils.interpolate(self.data.index.values,
-    #             datay, ind=indexes)
+    #             indexes = peakutils.interpolate(self.data.index.values, datay, ind=indexes)
     #         except Exception:
     #             pass
     #         indexes = [int(elem) for elem in indexes]
-    #         blIndexes = [self.data['ratio'][elem-20:elem].idxmin() for elem
-    #         in indexes if elem > 20]
+    #         blIndexes = [self.data['ratio'][elem-20:elem].idxmin() for elem in indexes if elem > 20]
     #         self.data_memory[file_path] = [indexes, blIndexes]
 
     #     dataindex = self.data.loc[indexes]
@@ -462,14 +420,11 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
     #     # self.piek_height[file_path] = piek_height
     #     self.ax1f1 = self.fig1.add_subplot(111)
     #     self.ax1f1.plot(self.data.index.values, datay, label="ratio")
-    #     self.ax1f1.scatter(indexes, data_y_index, marker='*', color='r',
-    #     s=40)
-    #     self.ax1f1.scatter(blIndexes, blYindexes, marker='o', color='g',
-    #     s=40)
+    #     self.ax1f1.scatter(indexes, data_y_index, marker='*', color='r', s=40)
+    #     self.ax1f1.scatter(blIndexes, blYindexes, marker='o', color='g', s=40)
     #     self.ax1f1.set_xlim([0, max(self.data.index.values)])
     #     self.ax1f1.set_xlabel("time (sec)")
-    #     self.ax1f1.legend(loc="upper left", prop={'size':10},
-    #     bbox_to_anchor=(0.95, 1.10), fancybox=True, shadow=True)
+    #     self.ax1f1.legend(loc="upper left", prop={'size':10}, bbox_to_anchor=(0.95, 1.10), fancybox=True, shadow=True)
     #     self.canvas.draw()
 
     # def pickonRevamp(self, event):
@@ -482,8 +437,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
     #         self.data_y_index = np.array(self.dataindex["ratio"])
     #         self.ax1f1.clear()
     #         self.ax1f1.plot(self.datax, self.datay, alpha=0.5, label='ratio')
-    #         self.ax1f1.scatter(indexi, self.data_y_index, marker='*',
-    #         color='r', s=40)
+    #         self.ax1f1.scatter(indexi, self.data_y_index, marker='*', color='r', s=40)
     #         self.ax1f1.set_xlim([0, max(self.datax)])
     #         self.canvas.draw()
     #     elif event.button == 3:
@@ -499,10 +453,11 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
     #         self.data_y_index = np.array(self.dataindex["ratio"])
     #         self.ax1f1.clear()
     #         self.ax1f1.plot(self.datax, self.datay, alpha=0.5, label='ratio')
-    #         self.ax1f1.scatter(indexi, self.data_y_index, marker='*',
-    #         color='r', s=40)
+    #         self.ax1f1.scatter(indexi, self.data_y_index, marker='*', color='r', s=40)
     #         self.ax1f1.set_xlim([0, max(self.datax)])
     #         self.canvas.draw()
+
+
 class MyToolbar(NavigationToolbar):
 
     def __init__(self, figure_canvas, parent=None):
@@ -517,7 +472,8 @@ class MyToolbar(NavigationToolbar):
                           ('Save', 'sollemnes in futurum', 'filesave', 'save_figure'),
                           ('print', 'print plot', DIRECTORY_PATH + "\\print", 'print_plot'),
                           ('delete', 'delete plot', DIRECTORY_PATH + "\\trash", 'delete_plot'),
-                          ('piek', 'set and remove piek marker', DIRECTORY_PATH + '\\piek', 'piek'),)
+                          ('piek', 'set and remove piek marker', DIRECTORY_PATH + '\\piek', 'piek'),
+                         )
         super(MyToolbar, self).__init__(figure_canvas, parent=None)
         self.piek_status = False
         self.cid = None
@@ -532,8 +488,16 @@ class MyToolbar(NavigationToolbar):
 
     def delete_plot(self):
         item = MYAPP.listLijst.takeItem(MYAPP.index)
+        # for row in range(MYAPP.viewTable_1.rowCount()):
+        #     item = MYAPP.viewTable_1.item(row, 0).text()
+        #     if item in MYAPP.file_path:
+        #         MYAPP.viewTable_1.removeRow(row)
+        file = str(MYAPP.file_path.split("\\")[-1])
         del item
         del MYAPP.file_list[MYAPP.index]
+        del MYAPP.input_values[MYAPP.file_path]
+        if MYAPP.index > len(MYAPP.file_list) - 1:
+            MYAPP.index = 0
         MYAPP.file_path = MYAPP.directory + MYAPP.file_list[MYAPP.index]
         index = MYAPP.listLijst.model().index(MYAPP.index)
         MYAPP.listLijst.setCurrentIndex(index)
