@@ -7,28 +7,32 @@ import scipy
 import scipy.signal
 import difflib
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.backends.qt_editor.figureoptions as figureoptions
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.uic import loadUiType
-import matplotlib.pyplot as plt
-import matplotlib.backends.qt_editor.figureoptions as figureoptions
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-UI_MAIN_WINDOW, Q_MAIN_WINDOW = loadUiType('design-2.ui')
+UI_MAIN_WINDOW, Q_MAIN_WINDOW = loadUiType('design_with_menu.ui')
 plt.style.use('ggplot')
 DIRECTORY_PATH = sys.path[0]
 
+
 class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
+
     def __init__(self):
         super(MyApp, self).__init__()
         self.setupUi(self)
-        self.importButton.clicked.connect(self.reading_stimulie_file)
-        self.fileKnop.clicked.connect(self.browse_folder)
-        self.addButton.clicked.connect(self.folder_add)
+        self.actionOpen_stimulation_file.triggered.connect(self.reading_stimulie_file)
+        self.actionOpen_folder.triggered.connect(self.browse_folder)
+        self.actionAdd_folder.triggered.connect(self.folder_add)
         self.exportButton.clicked.connect(self.case(self.viewTable_1))
+        self.exportButton.setAutoDefault(False)
+        self.searchBox.returnPressed.connect(self.searchFilter)
         self.model = QFileSystemModel()
         self.fig1 = Figure()
         self.canvas = FigureCanvas(self.fig1)
@@ -43,6 +47,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
         self.labels = {}
         self.data = None
         self.file_list = None
+        self.search_list = None
         self.index = None
         self.file_path = None
         self.stimulie_dataframe = None
@@ -66,11 +71,12 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
     def folder_add(self):
         self.directory = QFileDialog.getExistingDirectory(self,
                                                         "Pick a folder")
-        print(self.file_list)
         if self.file_list != None:
             self.file_list = self.file_list + self.file_lister(self.directory)
+            self.search_list = self.file_list[:]
         else:
             self.file_list = self.file_lister(self.directory)
+            self.search_list = self.file_list[:]
         self.index = 0
         self.listLijst.clicked.connect(self.selected_file)
 
@@ -86,12 +92,12 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             del dirs
             for file in files:
                 if file.endswith(".txt"):
-                    file_list.append(root.replace(directory_path, "") + self.directory + "\\" + file)
+                    file_list.append(self.directory + root.replace(directory_path, "") +  "\\" + file)
                     self.listLijst.addItem(root.replace(directory_path, "") + "\\" + file)
                 elif file.endswith(".csv"):
-                    ammount = self.data_checker(root.replace(directory_path, "") + "\\" + file)
-                    for i in range(ammount):
-                        file_list.append(root.replace(directory_path, "") + self.directory +
+                    amount = self.data_checker(root.replace(directory_path, "") + "\\" + file)
+                    for i in range(amount):
+                        file_list.append(self.directory + root.replace(directory_path, "") +
                                          "\\" + file + "~" + str(i))
                         self.listLijst.addItem(root.replace(directory_path, "") +
                                                "\\" + file + "~" + str(i))
@@ -106,7 +112,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
     # def tableSetter(self, table, row_count, column_count, columnData):
 
     #     """ Function tableSetter: Takes as input the table instant (tableWidget table),
-    #         the ammount of rowes (int row_count), the ammount of columns (int column_count),
+    #         the amount of rowes (int row_count), the amount of columns (int column_count),
     #         the data for the table (list columnData). Initialize the table and
     #         fills it with the items of columnData. """
 
@@ -238,23 +244,34 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
         else:
             try:
                 self.data_read(self.file_path)
-            except Exception:
+            except Exception as e:
+                print(e)
                 self.fig1.clf()
                 print("invalid file")
                 self.canvas.draw()
                 #self.data_plot_Zeiss_ratio(self.file_path)
+            
+    def searchFilter(self):
+        search_word = self.searchBox.text()
+        self.listLijst.clear()
+        self.file_list = [path for path in self.search_list if search_word.lower() in path.lower()]
+        self.index = 0
+        for path in self.file_list:
+            self.listLijst.addItem(path.replace(self.directory, ""))
+        self.index = 0
+        self.listLijst.clicked.connect(self.selected_file)
 
     def confocal_data_reader(self, file_path):
         if file_path not in self.labels:
             try:
                 index = difflib.get_close_matches(file_path, list(self.stimulie_dataframe[0]),
-                                                  cutoff=0)
+                                                  cutoff=0.3)
                 self.labels[file_path] = self.stimulie_dataframe[
                     self.stimulie_dataframe[0] == index[0]].dropna(axis=1).values[0][1:]
                 if len(self.labels[file_path]) < 1:
                     self.toolbar.delete_plot()
                     return
-            except Exception:
+            except Exception as e:
                 pass
         file_path2, ind = file_path.split('~')
         self.data = pandas.read_csv(file_path2, ',', header=1)
@@ -278,14 +295,16 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             self.data_memory[file_path] = [indexes, baseline_value]
         self.data = self.data.to_frame()
         self.data.columns = ['ratio']
-        self.signalBox.setChecked(False)
+        self.actionSignal.setChecked(False)
+        if self.actionNormalize.isChecked():
+            self.normalize_data()
         self.plotter(file_path)
 
     def data_read(self, file_path):
         if file_path not in self.labels:
             try:
                 index = difflib.get_close_matches(file_path, list(self.stimulie_dataframe[0]),
-                                                  cutoff=0)
+                                                  cutoff=0.6)
                 self.labels[file_path] = self.stimulie_dataframe[
                     self.stimulie_dataframe[0] == index[0]].dropna(axis=1).values[0][1:]
                 if len(self.labels[file_path]) < 1:
@@ -297,12 +316,20 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             line = file.readline().strip()
         if line == "Time	CFP	YFP":
             self.data = pandas.read_csv(file_path, "\t")[2:]
+        elif line ==  "Time	CFP	YFP	Ratio":
+            self.data = pandas.read_csv(file_path, "\t")[2:]
+        elif line == "Time	GFP	RFP	Ratio":
+            self.data = pandas.read_csv(file_path, "\t")[2:]
+            del self.data["Unnamed: 4"]
+            self.data.columns = ["Time", "YFP", "CFP", "Ratio"] 
         else:
             self.data = pandas.read_csv(file_path, "\t", header=3)
             del self.data["X.1"]
             self.data.columns = ["Time", "YFP", "CFP"]
         if "Unnamed: 3" in self.data.columns.values:
             del self.data["Unnamed: 3"]
+        elif "Unnamed: 4" in self.data.columns.values:
+            del self.data["Unnamed: 4"]
         self.data['Time'] = self.data['Time'].astype(int)
         self.data = self.data.drop_duplicates(subset='Time', keep='last')
         self.data = self.data.set_index('Time')
@@ -326,7 +353,13 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             indexes = [int(elem) for elem in indexes]
             baseline_value = self.data['ratio'][0:60].median()
             self.data_memory[file_path] = [indexes, baseline_value]
+        if self.actionNormalize.isChecked():
+            self.normalize_data()
         self.plotter(file_path)
+
+    def normalize_data(self):
+        self.data['ratio'] = self.data['ratio'] - self.data['ratio'].median()
+        self.data['ratio'] = self.data['ratio'] / self.data['ratio'].max()
 
     def plotter(self, file_path):
         self.fig1.clf()
@@ -337,13 +370,13 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
         except Exception:
             pass
         self.fig1.suptitle(file_path)
-        if self.signalBox.isChecked() and self.ratioBox.isChecked():
+        if self.actionSignal.isChecked() and self.actionRatio.isChecked():
             state_signal = 211
             state_ratio = 212
         else:
             state_signal = 111
             state_ratio = 111
-        if self.signalBox.isChecked():
+        if self.actionSignal.isChecked():
             self.ax1f1 = self.fig1.add_subplot(state_signal)
             if self.firstSignalBox.isChecked():
                 self.ax1f1.plot(self.data.CFP, label=self.firstSignalText.text(), marker="o",
@@ -354,7 +387,7 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             self.ax1f1.set_xlim([0, max(self.data.index.values)])
             self.ax1f1.legend(loc="upper left", prop={'size':10}, bbox_to_anchor=(0.95, 1.10),
                               fancybox=True, shadow=True)
-        if self.ratioBox.isChecked():
+        if self.actionRatio.isChecked():
             self.ax1f2 = self.fig1.add_subplot(state_ratio)
             self.ax1f2.plot(self.data.ratio, alpha=0.5, label='ratio')
             #self.ax1f2.scatter(self.data_memory[file_path][0], data_y_index.tolist(), marker='*', color='r', s=40)
@@ -362,6 +395,8 @@ class MyApp(UI_MAIN_WINDOW, Q_MAIN_WINDOW):
             self.ax1f2.set_xlabel("time (sec)")
             self.ax1f2.legend(loc="upper left", prop={'size':10}, bbox_to_anchor=(0.95, 1.10), 
                               fancybox=True, shadow=True)
+        if self.actionNormalize.isChecked():
+            self.ax1f2.set_ylim([self.data['ratio'].min(), 1])
         self.canvas.draw()
         self.table_values(file_path)
 
@@ -496,9 +531,9 @@ class MyToolbar(NavigationToolbar):
         del item
         del MYAPP.file_list[MYAPP.index]
         del MYAPP.input_values[MYAPP.file_path]
-        if MYAPP.index > len(MYAPP.file_list) - 1:
+        if MYAPP.index == MYAPP.listLijst.count():
             MYAPP.index = 0
-        MYAPP.file_path = MYAPP.directory + MYAPP.file_list[MYAPP.index]
+        MYAPP.file_path = MYAPP.file_list[MYAPP.index]
         index = MYAPP.listLijst.model().index(MYAPP.index)
         MYAPP.listLijst.setCurrentIndex(index)
         if '~' in MYAPP.file_path:
@@ -523,7 +558,7 @@ class MyToolbar(NavigationToolbar):
         MYAPP.index += 1
         if MYAPP.index > len(MYAPP.file_list) - 1:
             MYAPP.index = 0
-        MYAPP.file_path = MYAPP.directory + MYAPP.file_list[MYAPP.index]
+        MYAPP.file_path = MYAPP.file_list[MYAPP.index]
         index = MYAPP.listLijst.model().index(MYAPP.index)
         MYAPP.listLijst.setCurrentIndex(index)
         if '~' in MYAPP.file_path:
@@ -548,7 +583,7 @@ class MyToolbar(NavigationToolbar):
         MYAPP.index += -1
         if MYAPP.index < 0:
             MYAPP.index = len(MYAPP.file_list) - 1
-        MYAPP.file_path = MYAPP.directory + MYAPP.file_list[MYAPP.index]
+        MYAPP.file_path = MYAPP.file_list[MYAPP.index]
         index = MYAPP.listLijst.model().index(MYAPP.index)
         MYAPP.listLijst.setCurrentIndex(index)
         if '~' in MYAPP.file_path:
